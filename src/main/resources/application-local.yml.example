@@ -1,0 +1,14 @@
+
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-user:
+            client-name: ${keycloak-realms.resource}
+            client-id: ${keycloak-realms.resource}
+            client-secret: ${keycloak-realms.credentials.secrets}
+          keycloak-programmatic:
+            client-id: ${keycloak-realms.resource}
+            client-secret: ${keycloak-realms.credentials.secrets}

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty scope="context" name="MIDDLEWARE_LOG_LEVEL"
+                    source="logging.level.com.notification"/>
+    <property name="MIDDLEWARE_NAME" value="com.notification"/>
+
+    <springProperty scope="context" name="LOG_FILE_PATH" source="logging.file.path"/>
+    <springProperty scope="context" name="LOG_FILE_NAME" source="logging.file.name"/>
+    <springProperty scope="context" name="ROOT_LOG_LEVEL" source="logging.level.root"/>
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%d{dd-MM-yyyy HH:mm:ss.SSS} %magenta([%thread]) %X{correlationId} %highlight(%-5level) %logger{36}.%M - %msg%n"/>
+
+    <appender name="CONSOLE_APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="ROLLING_JSON_FILE_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/${LOG_FILE_NAME}.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>correlationId</includeMdcKeyName>
+            <findAndRegisterJacksonModules>false</findAndRegisterJacksonModules>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}/archived/${LOG_FILE_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>10</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <root level="${ROOT_LOG_LEVEL}">
+        <appender-ref ref="ROLLING_JSON_FILE_APPENDER"/>
+        <appender-ref ref="CONSOLE_APPENDER"/>
+    </root>
+
+    <logger name="${MIDDLEWARE_NAME}" level="${MIDDLEWARE_LOG_LEVEL}" additivity="false">
+        <appender-ref ref="ROLLING_JSON_FILE_APPENDER"/>
+        <appender-ref ref="CONSOLE_APPENDER"/>
+    </logger>
+</configuration>

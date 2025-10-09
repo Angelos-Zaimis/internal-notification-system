@@ -1,0 +1,178 @@
+service:
+  host:
+    name: localhost
+    port: 8281
+    prefix:
+  auth:
+    prefix:
+    url:
+
+
+spring:
+  codec:
+    max-in-memory-size: 31457280 # 
+  datasource:
+    url: jdbc:postgresql://${service.host.prefix}notificationdb:5432/datasource_notification
+    hikari:
+      connectionTimeout: 20000
+      maximumPoolSize: 10
+    username: testuser
+    password: 123456
+  devtools:
+    livereload:
+      port: 35719
+  flyway:
+    outOfOrder: true
+    locations:
+      - classpath:db/migration/schema
+    enabled: true
+    clean-disabled: true
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+  kafka:
+    bootstrap-servers: 127.0.0.1:29092
+  main:
+    allow-bean-definition-overriding: true
+    banner-mode: "off"
+  servlet:
+    multipart:
+      max-file-size: 30MB 
+      max-request-size: 30MB 
+  task:
+    scheduling:
+      pool:
+        size: 1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      status:
+        order: DOWN,OUT_OF_SERVICE,UNKNOWN,UP
+  metrics:
+    distribution:
+      percentiles-histogram[http.server.requests]: true
+      percentiles:
+        http.server.requests: 0.2, 0.3, 0.5, 0.7, 0.95, 0.99
+      slo:
+        http.server.requests: 10ms, 100ms
+
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
+    max-http-form-post-size: 29MB 
+  port: ${service.host.port}
+  servlet:
+    contextPath: /middleware-notification
+  forward-headers-strategy: native
+
+issuer:
+  default-realm: quarkus
+
+com:
+  c4-soft:
+    springaddons:
+        resourceserver:
+          permit-all:
+            - /actuator/health/readiness
+            - /actuator/health/liveness
+            - /v3/api-docs/**
+            - /mandate-handling/**
+          cors:
+            - path: /**
+              allowed-origin-patterns:
+                - http://localhost:*
+                - http://127.0.0.1:*
+              allowed-headers:
+                - "Access-Control-Allow-Headers"
+                - "Origin"
+                - "Access-Control-Request-Method"
+                - "Access-Control-Allow-Origin"
+                - "Authorization"
+                - "Cache-Control"
+                - "Content-Language"
+                - "Content-Type"
+                - "Modified"
+                - "Pragma"
+                - "x-auth-token"
+              exposed-headers:
+                - "Access-Control-Allow-Headers"
+                - "Origin"
+                - "Access-Control-Request-Method"
+                - "Access-Control-Allow-Origin"
+                - "Authorization"
+                - "Cache-Control"
+                - "Content-Language"
+                - "Content-Type"
+                - "Modified"
+                - "Pragma"
+                - "x-auth-token"
+              allowed-methods:
+                - "OPTIONS"
+                - "GET"
+                - "PATCH"
+                - "POST"
+                - "PUT"
+                - "DELETE"
+              allow-credentials: true
+        client:
+          csrf: disable
+          security-matchers:
+            - /login/**
+            - /oauth2/**
+            - /swagger-ui.html
+            - /swagger-ui/**
+          permit-all:
+            - /login/**
+            - /oauth2/**
+            - /swagger-ui.html
+            - /swagger-ui/**
+            - /mandate-handling/**
+
+jpa:
+  fallback-provider-id: 0b46ef15-57ee-402a-a54e-1df9e5dc50d3
+
+logging:
+  level:
+    root: "info"
+    reactor: "warn"
+    org:
+      apache: "warn"
+      hibernate:
+        validator: "warn"
+      keycloak:
+        adapters: "warn"
+      springframework: "warn"
+    jdk:
+      event:
+        security: "warn"
+  file:
+    path: ./log
+    name: middleware-notification
+
+
+springdoc:
+  api-docs:
+    enabled: true 
+  swagger-ui:
+    enabled: true
+    tagsSorter: alpha
+    doc-expansion: none
+    path: /swagger-ui
+
+notifications:
+  schedule-interval-milliseconds: 5000
