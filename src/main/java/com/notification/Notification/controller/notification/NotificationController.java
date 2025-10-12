@@ -45,22 +45,14 @@ public class NotificationController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(produces = "application/json")
-    public ResponseEntity<?> retrieveAllNotifications(
+    public ResponseEntity<Page<NotificationTxDTO>> retrieveAllNotifications(
             @RequestParam(defaultValue = "0") @Parameter(description = "Zero-based page index") int page,
             @RequestParam(defaultValue = "10") @Parameter(description = "Items per page") int size
     ) {
         try {
             Page<NotificationTxDTO> notifications = notificationQueryService.handleGetAllNotifications(page, size);
             log.info("Retrieved {} notifications on page {}", notifications.getNumberOfElements(), page);
-
-            java.util.Map<String, Object> response = new java.util.HashMap<>();
-            response.put("content", notifications.getContent());
-            response.put("totalElements", notifications.getTotalElements());
-            response.put("totalPages", notifications.getTotalPages());
-            response.put("size", notifications.getSize());
-            response.put("number", notifications.getNumber());
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(notifications);
         } catch (Exception ex) {
             return ExceptionHandlerUtil.handleException(ex);
         }

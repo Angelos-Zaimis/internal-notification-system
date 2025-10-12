@@ -13,9 +13,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.ContextConfiguration;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.springframework.data.domain.Page;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(NotificationController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @org.springframework.test.context.ActiveProfiles("test")
+@ContextConfiguration(classes = {NotificationController.class, PageJacksonTestConfig.class})
 class NotificationControllerTest {
 
     @Autowired
@@ -50,11 +62,14 @@ class NotificationControllerTest {
         notificationDTO = NotificationTxDTO.builder()
                 .id(notificationId)
                 .userId(UUID.randomUUID())
+                .senderId(UUID.randomUUID())
                 .title("Assignment Submitted")
                 .body("Your assignment has been submitted successfully")
                 .category(NotificationCategory.ASSIGNMENT)
                 .level(NotificationLevel.INFO)
+                .delivered(false)
                 .read(false)
+                .resourceId(UUID.randomUUID())
                 .createdAt(LocalDateTime.now())
                 .build();
     }
@@ -63,7 +78,7 @@ class NotificationControllerTest {
     @WithMockUser(roles = "STUDENT")
     @DisplayName("Should retrieve paginated notifications")
     void shouldRetrievePaginatedNotifications() throws Exception {
-        Page<NotificationTxDTO> page = new PageImpl<>(List.of(notificationDTO));
+        Page<NotificationTxDTO> page = new PageImpl<>(List.of(notificationDTO), PageRequest.of(0, 10), 1);
         
         when(notificationQueryService.handleGetAllNotifications(anyInt(), anyInt()))
                 .thenReturn(page);
@@ -148,7 +163,7 @@ class NotificationControllerTest {
     @WithMockUser(roles = "TEACHER")
     @DisplayName("Should allow teacher to access notifications")
     void shouldAllowTeacherAccess() throws Exception {
-        Page<NotificationTxDTO> page = new PageImpl<>(List.of(notificationDTO));
+        Page<NotificationTxDTO> page = new PageImpl<>(List.of(notificationDTO), PageRequest.of(0, 10), 1);
         
         when(notificationQueryService.handleGetAllNotifications(0, 10))
                 .thenReturn(page);
@@ -158,6 +173,27 @@ class NotificationControllerTest {
                         .param("size", "10")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+}
+
+@TestConfiguration
+class PageJacksonTestConfig {
+    @Bean
+    Module pageJacksonModule() {
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(PageImpl.class, new JsonSerializer<PageImpl>() {
+            @Override
+            public void serialize(PageImpl value, JsonGenerator gen, SerializerProvider serializers) throws java.io.IOException {
+                gen.writeStartObject();
+                gen.writeObjectField("content", value.getContent());
+                gen.writeNumberField("totalElements", value.getTotalElements());
+                gen.writeNumberField("totalPages", value.getTotalPages());
+                gen.writeNumberField("size", value.getSize());
+                gen.writeNumberField("number", value.getNumber());
+                gen.writeEndObject();
+            }
+        });
+        return module;
     }
 }
 
