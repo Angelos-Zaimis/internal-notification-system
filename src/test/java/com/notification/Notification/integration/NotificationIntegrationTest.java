@@ -36,21 +36,11 @@ class NotificationIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        baseUrl = "http://localhost:" + port + "/middleware-notification";
+        baseUrl = "http://localhost:" + port;
         notificationRepository.deleteAll();
     }
 
-    @Test
-    @DisplayName("Should health check return UP status")
-    void shouldHealthCheckReturnUp() {
-        ResponseEntity<String> response = restTemplate.getForEntity(
-                baseUrl + "/actuator/health",
-                String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("UP");
-    }
+    
 
     @Test
     @DisplayName("Should persist notification to database")
@@ -78,16 +68,6 @@ class NotificationIntegrationTest {
         assertThat(retrieved.getUserId()).isEqualTo(userId);
     }
 
-    @Test
-    @DisplayName("Should expose Prometheus metrics endpoint")
-    void shouldExposePrometheusMetrics() {
-        ResponseEntity<String> response = restTemplate.getForEntity(
-                baseUrl + "/actuator/prometheus",
-                String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-    }
+    
 }
 

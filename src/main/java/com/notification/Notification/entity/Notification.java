@@ -70,7 +70,7 @@ public class Notification {
     private LocalDateTime createdAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "translation_args", columnDefinition = "jsonb")
+    @Column(name = "translation_args")
     private Map<String, Object> translationArgs;
 
 }
