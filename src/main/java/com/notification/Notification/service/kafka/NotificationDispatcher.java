@@ -24,15 +24,15 @@ public class NotificationDispatcher {
     private final SsePushService ssePushService;
 
     @Transactional
-    @KafkaListener(topics = KafkaTopics.INTERNAL_ASSESSMENT_PUSH_NOTIFICATION, groupId = KafkaGroups.GROUP_INTERNAL_NOTIFICATION_DISPATCHER,
+    @KafkaListener(topics = KafkaTopics.INTERNAL_TOPIC_PUSH_NOTIFICATION, groupId = KafkaGroups.GROUP_INTERNAL_NOTIFICATION_DISPATCHER,
             containerFactory = "notificationInternalDispatcherListenerFactory")
     @Retryable(
             retryFor = Exception.class,
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000, multiplier = 2)
     )
-    public void handleInternalAssessmentNotification(NotificationDeliveryDTO notification) {
-        log.info("Received internal assessment notification: {}", notification);
+    public void handleInternalTopicNotification(NotificationDeliveryDTO notification) {
+        log.info("Received internal topic notification: {}", notification);
 
         dispatch(notification);
         updateNotification(notification);

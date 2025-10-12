@@ -1,4 +1,4 @@
-package com.notification.Notification.service.notification.assessment;
+package com.notification.Notification.service.notification.topic;
 
 import com.notification.Notification.configuration.kafka.KafkaTopics;
 import com.notification.Notification.dto.InternalNotificationDTO;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AssessmentNotificationService implements NotificationHandler {
+public class TopicNotificationService implements NotificationHandler {
 
     private final NotificationKafkaProducer notificationKafkaProducer;
     private final NotificationRepository notificationRepository;
@@ -34,7 +34,7 @@ public class AssessmentNotificationService implements NotificationHandler {
 
             NotificationDeliveryDTO notificationDeliveryDTO = notificationMapper.toDto(createdNotification);
 
-            notificationKafkaProducer.publish(KafkaTopics.INTERNAL_ASSESSMENT_PUSH_NOTIFICATION, notificationDeliveryDTO);
+            notificationKafkaProducer.publish(KafkaTopics.INTERNAL_TOPIC_PUSH_NOTIFICATION, notificationDeliveryDTO);
         } catch (DataAccessException e) {
             throw new NotificationAccessException("Failed to process notification", e);
         }
@@ -46,3 +46,4 @@ public class AssessmentNotificationService implements NotificationHandler {
         return newNotification;
     }
 }
+

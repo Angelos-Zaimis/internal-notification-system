@@ -19,7 +19,7 @@ public class NotificationDispatcherListenerConfig  extends AbstractKafkaConsumer
 
     @Override
     public String getKafkaGroup() {
-        return KafkaGroups.GROUP_NOTIFICATION;
+        return KafkaGroups.GROUP_INTERNAL_NOTIFICATION_DISPATCHER;
     }
 
     @Override
