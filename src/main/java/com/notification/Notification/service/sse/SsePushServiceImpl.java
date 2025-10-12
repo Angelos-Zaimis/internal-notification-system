@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NuSsePushService implements SsePushService {
+public class SsePushServiceImpl implements SsePushService {
 
     private final Map<UUID, SseEmitter> emitters = new ConcurrentHashMap<>();
 
