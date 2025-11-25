@@ -14,8 +14,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,6 +30,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/notifications")
 @RolesAllowed({"STUDENT", "ADMIN", "TEACHER"})
+@Validated
 public class NotificationController {
 
     private final NotificationQueryService notificationQueryService;
@@ -46,8 +50,11 @@ public class NotificationController {
     )
     @GetMapping(produces = "application/json")
     public ResponseEntity<Page<NotificationTxDTO>> retrieveAllNotifications(
-            @RequestParam(defaultValue = "0") @Parameter(description = "Zero-based page index") int page,
-            @RequestParam(defaultValue = "10") @Parameter(description = "Items per page") int size
+            @RequestParam(defaultValue = "0") @Parameter(description = "Zero-based page index") 
+            @Min(value = 0, message = "Page number must be non-negative") int page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "Items per page") 
+            @Min(value = 1, message = "Page size must be at least 1") 
+            @Max(value = 100, message = "Page size must not exceed 100") int size
     ) {
         try {
             Page<NotificationTxDTO> notifications = notificationQueryService.handleGetAllNotifications(page, size);
@@ -71,7 +78,8 @@ public class NotificationController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @PutMapping(value = "/{id}/read", produces = "application/json")
-    public ResponseEntity<NotificationTxDTO> markNotificationAsRead(@PathVariable("id") UUID id) {
+    public ResponseEntity<NotificationTxDTO> markNotificationAsRead(
+            @PathVariable("id") @Parameter(description = "Notification UUID") UUID id) {
         try {
             NotificationTxDTO notification = notificationQueryService.handleMarkNotificationAsRead(id);
             return ResponseEntity.ok(notification);
@@ -91,7 +99,8 @@ public class NotificationController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @DeleteMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Void> deleteNotification(@PathVariable("id") UUID id) {
+    public ResponseEntity<Void> deleteNotification(
+            @PathVariable("id") @Parameter(description = "Notification UUID") UUID id) {
         try {
             notificationQueryService.handleDeleteNotification(id);
             log.info("Deleted notification with ID: {}", id);

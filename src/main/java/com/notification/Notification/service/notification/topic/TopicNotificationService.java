@@ -25,7 +25,7 @@ public class TopicNotificationService implements NotificationHandler {
     private final NotificationMapper notificationMapper;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void processNotification(InternalNotificationDTO notification) {
         log.info("Processing notification from sender {}", notification.getSenderId());
 

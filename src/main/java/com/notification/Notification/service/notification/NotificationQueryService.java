@@ -15,14 +15,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
-@EnableScheduling
 @Service
 public class NotificationQueryService {
 
@@ -30,6 +29,7 @@ public class NotificationQueryService {
     private final NotificationMapper notificationMapper;
     private final TokenHandler tokenHandler;
 
+    @Transactional(readOnly = true)
     public Page<NotificationTxDTO> handleGetAllNotifications(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         UUID userId = UUID.fromString(tokenHandler.getSubject());
@@ -46,6 +46,7 @@ public class NotificationQueryService {
         return notificationRepository.findAllByUserId(userId, pageable);
     }
 
+    @Transactional
     public NotificationTxDTO handleMarkNotificationAsRead(UUID notificationId) {
         Notification notification = findNotification(notificationId);
         notification.setRead(true);
@@ -58,6 +59,7 @@ public class NotificationQueryService {
         return notificationRepository.findById(notificationId).orElseThrow(() -> new NotFoundException("Notification with id " + notificationId + " not found"));
     }
 
+    @Transactional
     public void handleDeleteNotification(UUID notificationId) {
         Notification notification = findNotification(notificationId);
         notificationRepository.delete(notification);

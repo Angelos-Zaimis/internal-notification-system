@@ -2,6 +2,7 @@ package com.notification.Notification.service.sse;
 
 import com.notification.Notification.dto.NotificationDeliveryDTO;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -20,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class SsePushServiceImpl implements SsePushService {
 
     private final Map<UUID, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private ScheduledExecutorService keepAliveExecutor;
 
     public SseEmitter subscribe(UUID userId) {
         log.info("Subscribing user {}", userId);
@@ -80,18 +83,38 @@ public class SsePushServiceImpl implements SsePushService {
 
     @PostConstruct
     public void startKeepAlive() {
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+        keepAliveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread thread = new Thread(r, "sse-keepalive");
+            thread.setDaemon(true);
+            return thread;
+        });
+        keepAliveExecutor.scheduleAtFixedRate(() -> {
             for (Map.Entry<UUID, SseEmitter> entry : emitters.entrySet()) {
                 try {
                     entry.getValue().send(SseEmitter.event()
                             .name("ping")
                             .comment("keep-alive"));
-                    log.info("[keepAlive] Ping sent to user {}", entry.getKey());
+                    log.debug("[keepAlive] Ping sent to user {}", entry.getKey());
                 } catch (IOException e) {
                     log.warn("Keep-alive failed for user {}: {}", entry.getKey(), e.getMessage());
                     emitters.remove(entry.getKey());
                 }
             }
         }, 0, 15, TimeUnit.SECONDS);
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        if (keepAliveExecutor != null) {
+            keepAliveExecutor.shutdown();
+            try {
+                if (!keepAliveExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    keepAliveExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                keepAliveExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }

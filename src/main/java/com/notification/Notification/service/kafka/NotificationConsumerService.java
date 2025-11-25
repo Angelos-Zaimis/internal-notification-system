@@ -29,6 +29,10 @@ public class NotificationConsumerService {
             backoff = @Backoff(delay = 2000, multiplier = 2)
     )
     public void consumeTopicNotification(InternalNotificationDTO notification) {
+        if (notification == null) {
+            log.error("Received null notification");
+            return;
+        }
         log.info("Received topic notification from sender id: {}", notification.getSenderId());
         notificationHandler.processNotification(notification);
     }
