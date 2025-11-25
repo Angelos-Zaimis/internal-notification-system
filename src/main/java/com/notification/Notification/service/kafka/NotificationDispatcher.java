@@ -23,7 +23,7 @@ public class NotificationDispatcher {
     private final NotificationRepository notificationRepository;
     private final SsePushService ssePushService;
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @KafkaListener(topics = KafkaTopics.INTERNAL_TOPIC_PUSH_NOTIFICATION, groupId = KafkaGroups.GROUP_INTERNAL_NOTIFICATION_DISPATCHER,
             containerFactory = "notificationInternalDispatcherListenerFactory")
     @Retryable(
@@ -32,6 +32,10 @@ public class NotificationDispatcher {
             backoff = @Backoff(delay = 2000, multiplier = 2)
     )
     public void handleInternalTopicNotification(NotificationDeliveryDTO notification) {
+        if (notification == null) {
+            log.error("Received null notification in dispatcher");
+            throw new IllegalArgumentException("Notification cannot be null");
+        }
         log.info("Received internal topic notification: {}", notification);
 
         dispatch(notification);

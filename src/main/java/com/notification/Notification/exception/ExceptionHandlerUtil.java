@@ -31,9 +31,9 @@ public class ExceptionHandlerUtil {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body((T) Map.of(ERROR, INVALID_INVOCATION, MESSAGE, ex.getMessage()));
         } else {
-            logger.debug(UNEXPECTED_EXCEPTION, ex);
+            logger.error(UNEXPECTED_EXCEPTION, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body((T) Map.of((ERROR), UNEXPECTED_EXCEPTION, MESSAGE, ex.getMessage()));
+                    .body((T) Map.of(ERROR, UNEXPECTED_EXCEPTION, MESSAGE, ex.getMessage()));
         }
     }
 
